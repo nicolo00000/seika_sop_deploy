@@ -1,0 +1,30 @@
+Title: Procedura standard per la manutenzione di Machine_3
+
+Purpose: Questa procedura fornisce linee guida dettagliate per eseguire la manutenzione regolare di Machine_3 per garantirne il corretto funzionamento e prolungarne la durata.
+
+Scope: Questa procedura si applica alla manutenzione di Machine_3, in particolare al processo di staccare la presa, pulire la puleggia, riattaccare la puleggia, riattaccare la presa e pulire le mani.
+
+Responsabilità:
+- L'operatore responsabile di eseguire la manutenzione di Machine_3.
+- Il supervisore per la supervisione e l'approvazione della procedura di manutenzione.
+
+Attrezzature/Materiali necessari:
+- Guanti protettivi
+- Panno per la pulizia
+- Soluzione detergente non aggressiva
+- Strumenti per staccare e riattaccare la presa e la puleggia
+
+Misure di sicurezza:
+- Assicurarsi che Machine_3 sia spenta prima di iniziare la manutenzione.
+- Indossare sempre i guanti protettivi durante la manipolazione delle parti.
+- Prestare attenzione per evitare lesioni durante il processo di manutenzione.
+
+Procedure passo dopo passo:
+1. Prova: Verificare che Machine_3 sia spenta e scollegare la presa dalla presa di corrente.
+2. Staccare la presa: Utilizzando gli strumenti appropriati, staccare la presa di alimentazione dalla macchina in modo sicuro.
+3. Pulire la puleggia: Con il panno per la pulizia e la soluzione detergente, pulire accuratamente la puleggia per rimuovere lo sporco e i residui accumulati.
+4. Riattaccare la puleggia: Assicurarsi che la puleggia sia pulita e inserirla nuovamente nel suo alloggiamento in modo corretto.
+5. Riattaccare la presa: Collegare nuovamente la presa di alimentazione alla macchina e assicurarsi che sia ben fissata.
+6. Pulire le mani: Dopo aver completato la manutenzione, lavare accuratamente le mani con acqua e sapone.
+
+Questa procedura dovrebbe essere eseguita regolarmente secondo il programma di manutenzione preventiva per garantire che Machine_3 funzioni in modo efficiente e sicuro.

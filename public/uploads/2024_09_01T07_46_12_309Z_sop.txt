@@ -1,0 +1,28 @@
+Title: Procedura Operativa Standard per l'Operazione della Macchina_2
+
+Purpose: Questa procedura dettagliata fornisce istruzioni su come utilizzare correttamente la Macchina_2 per generare il negozio.
+
+Scope: Questa SOP si applica agli operatori incaricati di utilizzare la Macchina_2 per generare il negozio.
+
+Responsibilities:
+- Gli operatori sono responsabili di seguire attentamente questa procedura per garantire un corretto funzionamento della Macchina_2.
+
+Equipment/Materials Needed:
+- Macchina_2
+- Materiale di input necessario per generare il negozio
+
+Safety Precautions:
+- Assicurarsi che la Macchina_2 sia correttamente installata e funzionante prima di iniziare l'operazione.
+- Utilizzare attrezzature di protezione individuale, come guanti e occhiali protettivi, durante l'operazione.
+- Prestare attenzione a eventuali segnali di malfunzionamento della macchina e interrompere immediatamente l'operazione in caso di emergenza.
+
+Procedura:
+1. Accertarsi che la Macchina_2 sia correttamente collegata e pronta per l'operazione.
+2. Avviare la Macchina_2 premendo il pulsante di accensione.
+3. Inserire il materiale di input necessario per generare il negozio nella Macchina_2.
+4. Monitorare attentamente il processo di generazione per assicurarsi che la Macchina_2 funzioni correttamente.
+5. Una volta completata l'operazione, arrestare la Macchina_2 premendo il pulsante di spegnimento.
+6. Rimuovere con cura il negozio generato dalla Macchina_2.
+7. Eseguire controlli di routine sulla Macchina_2 per garantirne il corretto funzionamento e la manutenzione.
+
+Questa procedura fornisce linee guida dettagliate per l'utilizzo corretto della Macchina_2 per generare il negozio. Assicurarsi di seguire attentamente ogni passaggio per garantire risultati ottimali.

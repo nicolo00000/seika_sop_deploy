@@ -1,0 +1,1 @@
+Error generating SOP: 404 The model `text-davinci-002` has been deprecated, learn more here: https://platform.openai.com/docs/deprecations
