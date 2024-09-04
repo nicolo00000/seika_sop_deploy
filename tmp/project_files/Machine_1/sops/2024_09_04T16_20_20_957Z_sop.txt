@@ -1,0 +1,25 @@
+**Title:** Procedura Operativa Standard per la Pulizia della Macchina_1
+
+**Purpose:** Il presente documento fornisce istruzioni dettagliate per la pulizia della Macchina_1 al fine di garantire il corretto funzionamento e la sicurezza dell'operatore.
+
+**Scope:** Questa procedura si applica alla pulizia regolare della Macchina_1.
+
+**Responsibilities:**
+- L'operatore è responsabile di eseguire la pulizia della Macchina_1.
+- Il supervisore è responsabile di assicurarsi che la pulizia venga eseguita correttamente e in modo sicuro.
+
+**Equipment/Materials Needed:**
+- Panno per la pulizia
+- Detergente non abrasivo
+- Guanti protettivi
+
+**Safety Precautions:**
+- Assicurarsi che la Macchina_1 sia spenta prima di iniziare la pulizia.
+- Indossare i guanti protettivi durante l'intera procedura per evitare lesioni alle mani.
+
+**Procedure:**
+1. Stacca la pulizia: Spegni la Macchina_1 premendo il pulsante di spegnimento.
+2. Pulisci la pulizia: Utilizzando un panno per la pulizia inumidito con detergente non abrasivo, pulisci delicatamente tutte le superfici esterne della Macchina_1 per rimuovere lo sporco e i residui.
+3. Retacca la pulizia: Una volta completata la pulizia, assicurati che tutte le superfici siano asciutte e pulite. Riaccendi la Macchina_1 premendo il pulsante di accensione.
+
+Seguendo attentamente questa procedura, garantirai che la Macchina_1 sia sempre pulita e pronta per l'uso.

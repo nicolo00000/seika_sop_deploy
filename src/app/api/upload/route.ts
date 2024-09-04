@@ -14,7 +14,7 @@ const execAsync = util.promisify(exec);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Define constants
-const PROJECT_FOLDER = 'project_files';
+const PROJECT_FOLDER = '/tmp/project_files'; // Changed to /tmp for Vercel
 const MACHINES = ['Machine_1', 'Machine_2', 'Machine_3'];
 const ALLOWED_EXTENSIONS = ['wav', 'webm'];
 
