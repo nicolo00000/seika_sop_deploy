@@ -6,8 +6,11 @@ import fs from 'fs';
 import { db } from '@/lib/db';
 import { userFiles } from '@/lib/db/schema';
 import { auth } from "@clerk/nextjs/server";
+import { exec } from 'child_process';
+import util from 'util';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const execPromise = util.promisify(exec);
 
 const PROJECT_FOLDER = '/tmp/project_files';
 const MACHINES = ['Machine_1', 'Machine_2', 'Machine_3'];
@@ -25,6 +28,18 @@ async function createFolders() {
 function allowedFile(filename: string): boolean {
   const ext = filename.split('.').pop()?.toLowerCase();
   return ext ? ALLOWED_EXTENSIONS.includes(ext) : false;
+}
+
+// Conversion function using ffmpeg with better error handling
+async function convertAudioToWav(inputFilePath: string, outputFilePath: string): Promise<void> {
+  try {
+    const command = `ffmpeg -i ${inputFilePath} -vn -ar 44100 -ac 2 -b:a 192k ${outputFilePath}`;
+    await execPromise(command);
+    console.log(`Audio converted to WAV: ${outputFilePath}`);
+  } catch (error) {
+    console.error('Error in audio conversion:', error);
+    throw new Error('Failed to convert audio file: ' + (error instanceof Error ? error.message : String(error)));
+  }
 }
 
 async function transcribeAudio(filepath: string, language: string): Promise<string> {
@@ -89,7 +104,10 @@ export async function POST(req: NextRequest) {
     await writeFile(audioPath, Buffer.from(await audio.arrayBuffer()));
     console.log(`Audio file saved to: ${audioPath}`);
 
-    const transcript = await transcribeAudio(audioPath, language);
+    const wavAudioPath = path.join(PROJECT_FOLDER, machineName, 'audio', `${timestamp}_converted.wav`);
+    await convertAudioToWav(audioPath, wavAudioPath);
+
+    const transcript = await transcribeAudio(wavAudioPath, language);
     console.log('Transcription completed');
 
     const sop = await generateSOP(transcript, machineName, language);
