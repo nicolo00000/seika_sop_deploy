@@ -6,6 +6,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { desc, eq } from 'drizzle-orm';
 
+const PROJECT_FOLDER = '/tmp/project_files'; // Use /tmp directory for Vercel
+
 export async function GET(req: NextRequest) {
   try {
     const { userId } = auth();
@@ -25,7 +27,7 @@ export async function GET(req: NextRequest) {
     // Read the SOP content from the file system using the filePath
     const filesWithContent = await Promise.all(
       sopFiles.map(async (file) => {
-        const sopPath = path.join('/tmp', file.filePath); // Use /tmp directory
+        const sopPath = path.join(PROJECT_FOLDER, file.machineName, 'sops', path.basename(file.filePath));
         try {
           const content = await fs.readFile(sopPath, 'utf-8');
           return { ...file, content };
