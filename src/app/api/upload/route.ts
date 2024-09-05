@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readFile } from 'fs/promises';
 import path from 'path';
-import fs from 'fs';
 import { db } from '@/lib/db';
 import { userFiles } from '@/lib/db/schema';
 import { auth } from "@clerk/nextjs/server";
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Define constants
-const PROJECT_FOLDER = '/tmp/project_files'; // Use /tmp directory for Vercel
+const PROJECT_FOLDER = '/tmp/project_files';
 const MACHINES = ['Machine_1', 'Machine_2', 'Machine_3'];
-const ALLOWED_EXTENSIONS = ['wav', 'webm', 'mp3', 'm4a']; // Add more audio formats if needed
+const ALLOWED_EXTENSIONS = ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'];
 
-// Helper functions
 async function createFolders() {
   for (const machine of MACHINES) {
     const machinePath = path.join(PROJECT_FOLDER, machine);
@@ -29,11 +30,24 @@ function allowedFile(filename: string): boolean {
   return ext ? ALLOWED_EXTENSIONS.includes(ext) : false;
 }
 
+async function convertToWav(inputPath: string): Promise<string> {
+  const outputPath = inputPath.replace(/\.[^/.]+$/, ".wav");
+  await execAsync(`ffmpeg -i ${inputPath} -acodec pcm_s16le -ar 16000 ${outputPath}`);
+  return outputPath;
+}
+
 async function transcribeAudio(filepath: string, language: string): Promise<string> {
   console.log(`Transcribing audio file: ${filepath}`);
   try {
+    let fileToTranscribe = filepath;
+    if (!filepath.toLowerCase().endsWith('.wav')) {
+      console.log('Converting file to WAV format');
+      fileToTranscribe = await convertToWav(filepath);
+    }
+
+    const fileBuffer = await readFile(fileToTranscribe);
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(filepath),
+      file: new File([fileBuffer], 'audio.wav', { type: 'audio/wav' }),
       model: 'whisper-1',
       language: language === 'it' ? 'it' : 'en',
     });
@@ -41,7 +55,7 @@ async function transcribeAudio(filepath: string, language: string): Promise<stri
     return transcription.text;
   } catch (error) {
     console.error('Error in audio transcription:', error);
-    throw new Error('Failed to transcribe audio');
+    throw new Error('Failed to transcribe audio: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
 
@@ -51,49 +65,33 @@ async function generateSOP(transcript: string, machineName: string, language: st
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
-        {
-          role: "system",
-          content: `You are a helpful assistant that creates detailed Standard Operating Procedures (SOPs) for ${machineName} based on audio transcriptions.`
-        },
-        {
-          role: "user",
-          content: `Create a detailed SOP for ${machineName} based on this transcription: '${transcript}'. Include a title, purpose, scope, responsibilities, equipment/materials needed, safety precautions, and step-by-step procedures. The procedure should be written in ${language === 'it' ? 'Italian' : 'English'}.`
-        }
+        { role: "system", content: `Create an SOP for ${machineName} based on audio transcriptions.` },
+        { role: "user", content: `Create a detailed SOP for ${machineName} based on this transcription: '${transcript}'. Write in ${language === 'it' ? 'Italian' : 'English'}.` }
       ],
       max_tokens: 1000,
-      temperature: 0.7,
     });
-
     return completion.choices[0].message.content || 'No SOP generated';
   } catch (error) {
     console.error('Error in SOP generation:', error);
-    throw new Error('Failed to generate SOP');
+    throw new Error('Failed to generate SOP: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
 
 export async function POST(req: NextRequest) {
-  console.log('Environment:', process.env.NODE_ENV);
-  console.log('Project folder:', PROJECT_FOLDER);
-
-  await createFolders();  // Ensure folders are created before handling files
+  console.log('POST request received');
+  await createFolders();
 
   try {
-    console.log('POST request received');
-    
     const { userId } = auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const formData = await req.formData();
     const audio = formData.get('audio') as File;
     const machineName = formData.get('machine') as string;
     const language = formData.get('language') as string;
 
-    console.log(`Upload request received for machine: ${machineName}, language: ${language}`);
-
     if (!audio || !machineName || !language) {
-      return NextResponse.json({ error: 'Missing audio, machine name, or language' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     if (!allowedFile(audio.name)) {
@@ -102,54 +100,29 @@ export async function POST(req: NextRequest) {
 
     const timestamp = new Date().toISOString().replace(/[:.-]/g, '_');
     const filename = `${timestamp}_${audio.name}`;
-    const machinePath = path.join(PROJECT_FOLDER, machineName);
-    const audioPath = path.join(machinePath, 'audio', filename);
+    const audioPath = path.join(PROJECT_FOLDER, machineName, 'audio', filename);
 
-    // Save the uploaded audio file
     await writeFile(audioPath, Buffer.from(await audio.arrayBuffer()));
     console.log(`Audio file saved to: ${audioPath}`);
 
-    // Transcribe the audio
     const transcript = await transcribeAudio(audioPath, language);
     console.log('Transcription completed');
 
-    // Generate the SOP
     const sop = await generateSOP(transcript, machineName, language);
     console.log('SOP generated');
 
-    // Save transcript and SOP files
-    const transcriptPath = path.join(machinePath, 'transcripts', `${timestamp}_transcript.txt`);
-    const sopPath = path.join(machinePath, 'sops', `${timestamp}_sop.txt`);
+    const transcriptPath = path.join(PROJECT_FOLDER, machineName, 'transcripts', `${timestamp}_transcript.txt`);
+    const sopPath = path.join(PROJECT_FOLDER, machineName, 'sops', `${timestamp}_sop.txt`);
 
     await writeFile(transcriptPath, transcript);
     await writeFile(sopPath, sop);
 
-    // Save file information to the database
     await db.insert(userFiles).values([
-      {
-        userId,
-        fileName: path.basename(audioPath),
-        fileType: 'audio',
-        filePath: audioPath,
-        machineName,
-      },
-      {
-        userId,
-        fileName: path.basename(transcriptPath),
-        fileType: 'transcript',
-        filePath: transcriptPath,
-        machineName,
-      },
-      {
-        userId,
-        fileName: path.basename(sopPath),
-        fileType: 'sop',
-        filePath: sopPath,
-        machineName,
-      },
+      { userId, fileName: path.basename(audioPath), fileType: 'audio', filePath: audioPath, machineName },
+      { userId, fileName: path.basename(transcriptPath), fileType: 'transcript', filePath: transcriptPath, machineName },
+      { userId, fileName: path.basename(sopPath), fileType: 'sop', filePath: sopPath, machineName },
     ]);
 
-    // Respond with success
     return NextResponse.json({
       machine: machineName,
       audioFile: audioPath,

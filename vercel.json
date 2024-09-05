@@ -12,10 +12,14 @@
     "OPENAI_API_KEY": "@openai_api_key",
     "DATABASE_URL": "@database_url"
   },
-  "build": {
-    "env": {
-      "OPENAI_API_KEY": "@openai_api_key",
-      "DATABASE_URL": "@database_url"
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "node_modules/@ffmpeg-installer/ffmpeg/ffmpeg",
+      "use": "@vercel/static"
     }
-  }
+  ]
 }
