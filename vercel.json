@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "functions": {
+    "api/upload/route.ts": {
+      "maxDuration": 300
+    },
+    "api/history/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "OPENAI_API_KEY": "@openai_api_key",
+    "DATABASE_URL": "@database_url"
+  },
+  "build": {
+    "env": {
+      "OPENAI_API_KEY": "@openai_api_key",
+      "DATABASE_URL": "@database_url"
+    }
+  }
+}

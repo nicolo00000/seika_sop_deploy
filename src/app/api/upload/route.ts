@@ -2,21 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { exec } from 'child_process';
-import util from 'util';
 import fs from 'fs';
 import { db } from '@/lib/db';
 import { userFiles } from '@/lib/db/schema';
 import { auth } from "@clerk/nextjs/server";
 
-const execAsync = util.promisify(exec);
-
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Define constants
-const PROJECT_FOLDER = '/tmp/project_files'; // Changed to /tmp for Vercel
+const PROJECT_FOLDER = '/tmp/project_files'; // Use /tmp directory for Vercel
 const MACHINES = ['Machine_1', 'Machine_2', 'Machine_3'];
-const ALLOWED_EXTENSIONS = ['wav', 'webm'];
+const ALLOWED_EXTENSIONS = ['wav', 'webm', 'mp3', 'm4a']; // Add more audio formats if needed
 
 // Helper functions
 async function createFolders() {
@@ -33,22 +29,6 @@ function allowedFile(filename: string): boolean {
   return ext ? ALLOWED_EXTENSIONS.includes(ext) : false;
 }
 
-async function convertWebmToWav(inputPath: string): Promise<string> {
-  const outputPath = inputPath.replace('.webm', '.wav');
-  const ffmpegCommand = `ffmpeg -i ${inputPath} -acodec pcm_s16le -ar 16000 ${outputPath}`;
-  console.log(`Running ffmpeg command: ${ffmpegCommand}`);
-  
-  try {
-    const { stdout, stderr } = await execAsync(ffmpegCommand);
-    console.log('ffmpeg stdout:', stdout);
-    console.log('ffmpeg stderr:', stderr);
-    return outputPath;
-  } catch (error) {
-    console.error('Error during WebM to WAV conversion:', error);
-    throw new Error('Failed to convert WebM to WAV');
-  }
-}
-
 async function transcribeAudio(filepath: string, language: string): Promise<string> {
   console.log(`Transcribing audio file: ${filepath}`);
   try {
@@ -61,7 +41,7 @@ async function transcribeAudio(filepath: string, language: string): Promise<stri
     return transcription.text;
   } catch (error) {
     console.error('Error in audio transcription:', error);
-    throw error;
+    throw new Error('Failed to transcribe audio');
   }
 }
 
@@ -87,12 +67,15 @@ async function generateSOP(transcript: string, machineName: string, language: st
     return completion.choices[0].message.content || 'No SOP generated';
   } catch (error) {
     console.error('Error in SOP generation:', error);
-    throw error;
+    throw new Error('Failed to generate SOP');
   }
 }
 
 export async function POST(req: NextRequest) {
-  await createFolders();
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Project folder:', PROJECT_FOLDER);
+
+  await createFolders();  // Ensure folders are created before handling files
 
   try {
     console.log('POST request received');
@@ -122,20 +105,19 @@ export async function POST(req: NextRequest) {
     const machinePath = path.join(PROJECT_FOLDER, machineName);
     const audioPath = path.join(machinePath, 'audio', filename);
 
+    // Save the uploaded audio file
     await writeFile(audioPath, Buffer.from(await audio.arrayBuffer()));
     console.log(`Audio file saved to: ${audioPath}`);
 
-    let wavPath = audioPath;
-    if (audioPath.toLowerCase().endsWith('.webm')) {
-      wavPath = await convertWebmToWav(audioPath);
-    }
-
-    const transcript = await transcribeAudio(wavPath, language);
+    // Transcribe the audio
+    const transcript = await transcribeAudio(audioPath, language);
     console.log('Transcription completed');
 
+    // Generate the SOP
     const sop = await generateSOP(transcript, machineName, language);
     console.log('SOP generated');
 
+    // Save transcript and SOP files
     const transcriptPath = path.join(machinePath, 'transcripts', `${timestamp}_transcript.txt`);
     const sopPath = path.join(machinePath, 'sops', `${timestamp}_sop.txt`);
 
@@ -167,6 +149,7 @@ export async function POST(req: NextRequest) {
       },
     ]);
 
+    // Respond with success
     return NextResponse.json({
       machine: machineName,
       audioFile: audioPath,
@@ -177,10 +160,11 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error processing upload:', error);
+    console.error('Detailed error:', error);
     return NextResponse.json({ 
       error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error occurred'
+      details: error instanceof Error ? error.message : 'Unknown error occurred',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }

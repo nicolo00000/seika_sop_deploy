@@ -25,23 +25,24 @@ export async function GET(req: NextRequest) {
     // Read the SOP content from the file system using the filePath
     const filesWithContent = await Promise.all(
       sopFiles.map(async (file) => {
-        const sopPath = path.resolve(file.filePath);  // Resolve the file path
+        const sopPath = path.join('/tmp', file.filePath); // Use /tmp directory
         try {
-          const content = await fs.readFile(sopPath, 'utf-8');  // Read the content from file
-          return { ...file, content };  // Add the file content to the response
+          const content = await fs.readFile(sopPath, 'utf-8');
+          return { ...file, content };
         } catch (err) {
           console.error(`Error reading SOP file at ${sopPath}:`, err);
-          return { ...file, content: 'Error reading SOP file' };  // Return an error message if file can't be read
+          return { ...file, content: 'Error reading SOP file' };
         }
       })
     );
 
-    return NextResponse.json(filesWithContent);  // Return all SOP files with content
+    return NextResponse.json(filesWithContent);
   } catch (error) {
-    console.error('Error fetching user history:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error occurred'
+    console.error('Detailed error:', error);
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error occurred',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }
