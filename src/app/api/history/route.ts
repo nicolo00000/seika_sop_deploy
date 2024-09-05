@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { userFiles } from '@/lib/db/schema';
 import { auth } from "@clerk/nextjs/server";
-import { promises as fs } from 'fs';
-import path from 'path';
 import { desc, eq } from 'drizzle-orm';
-
-const PROJECT_FOLDER = '/tmp/project_files'; // Use /tmp directory for Vercel
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,21 +20,8 @@ export async function GET(req: NextRequest) {
     // Filter only the 'sop' file types
     const sopFiles = files.filter(file => file.fileType === 'sop');
 
-    // Read the SOP content from the file system using the filePath
-    const filesWithContent = await Promise.all(
-      sopFiles.map(async (file) => {
-        const sopPath = path.join(PROJECT_FOLDER, file.machineName, 'sops', path.basename(file.filePath));
-        try {
-          const content = await fs.readFile(sopPath, 'utf-8');
-          return { ...file, content };
-        } catch (err) {
-          console.error(`Error reading SOP file at ${sopPath}:`, err);
-          return { ...file, content: 'Error reading SOP file' };
-        }
-      })
-    );
-
-    return NextResponse.json(filesWithContent);
+    // Return the SOP files without trying to read their content
+    return NextResponse.json(sopFiles);
   } catch (error) {
     console.error('Detailed error:', error);
     return NextResponse.json({

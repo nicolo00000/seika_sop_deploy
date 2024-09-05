@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
-import { writeFile, mkdir, readFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import fs from 'fs';
 import { db } from '@/lib/db';
 import { userFiles } from '@/lib/db/schema';
 import { auth } from "@clerk/nextjs/server";
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const PROJECT_FOLDER = '/tmp/project_files';
 const MACHINES = ['Machine_1', 'Machine_2', 'Machine_3'];
-const ALLOWED_EXTENSIONS = ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'];
+const ALLOWED_EXTENSIONS = ['wav', 'webm', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg'];
 
 async function createFolders() {
   for (const machine of MACHINES) {
@@ -30,24 +27,11 @@ function allowedFile(filename: string): boolean {
   return ext ? ALLOWED_EXTENSIONS.includes(ext) : false;
 }
 
-async function convertToWav(inputPath: string): Promise<string> {
-  const outputPath = inputPath.replace(/\.[^/.]+$/, ".wav");
-  await execAsync(`ffmpeg -i ${inputPath} -acodec pcm_s16le -ar 16000 ${outputPath}`);
-  return outputPath;
-}
-
 async function transcribeAudio(filepath: string, language: string): Promise<string> {
   console.log(`Transcribing audio file: ${filepath}`);
   try {
-    let fileToTranscribe = filepath;
-    if (!filepath.toLowerCase().endsWith('.wav')) {
-      console.log('Converting file to WAV format');
-      fileToTranscribe = await convertToWav(filepath);
-    }
-
-    const fileBuffer = await readFile(fileToTranscribe);
     const transcription = await openai.audio.transcriptions.create({
-      file: new File([fileBuffer], 'audio.wav', { type: 'audio/wav' }),
+      file: fs.createReadStream(filepath),
       model: 'whisper-1',
       language: language === 'it' ? 'it' : 'en',
     });
@@ -117,6 +101,7 @@ export async function POST(req: NextRequest) {
     await writeFile(transcriptPath, transcript);
     await writeFile(sopPath, sop);
 
+    // Save file information to the database
     await db.insert(userFiles).values([
       { userId, fileName: path.basename(audioPath), fileType: 'audio', filePath: audioPath, machineName },
       { userId, fileName: path.basename(transcriptPath), fileType: 'transcript', filePath: transcriptPath, machineName },
